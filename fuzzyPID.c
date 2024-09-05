@@ -1,5 +1,16 @@
 #include "fuzzyPID.h"
 
+/*struct fuzzy {
+    unsigned int input_num;// 输入变量的数量
+    unsigned int output_num;//输出变量的数量
+    unsigned int fo_type;//模糊系统的类型（通常表示模糊操作的类型）
+    unsigned int *mf_type;//指向隶属度函数类型数组
+    int *mf_params;// 指向模糊集参数的数组
+    unsigned int df_type;// 指向模糊集参数的数组
+    int *rule_base;//指向模糊规则库的数组
+    float *output;// 指向输出结果的数组
+};*/
+
 struct fuzzy *fuzzy_init(unsigned int input_num, unsigned int output_num) {
     struct fuzzy *fuzzy_struct = (struct fuzzy *) malloc(sizeof(struct fuzzy));
     fuzzy_struct->input_num = input_num;
@@ -20,13 +31,16 @@ void delete_fuzzy(struct fuzzy *fuzzy_struct) {
 }
 
 void fuzzy_params_init(struct fuzzy *fuzzy_struct, unsigned int mf_type, unsigned int fo_type, unsigned int df_type,
-                       int mf_params[], int rule_base[][qf_default]) {
-    for (unsigned int i = 0; i < fuzzy_struct->input_num + fuzzy_struct->output_num; ++i) {
-        fuzzy_struct->mf_type[i] = mf_type;
+                       int mf_params[], int rule_base[][qf_default])//初始化了一个 fuzzy 结构体中的一些参数。
+{
+    for (unsigned int i = 0; i < fuzzy_struct->input_num + fuzzy_struct->output_num; ++i) //循环代码用于初始化fuzzy_struct->mf_type数组。fuzzy_struct->input_num 和 fuzzy_struct->output_num 分别表示输入和输出的数量。
+    {
+        fuzzy_struct->mf_type[i] = mf_type;//这个循环将 mf_type 值赋给 mf_type 数组中的每一个元素。也就是说，所有输入和输出的隶属函数类型都被设置为 mf_type。
     }
 
-    for (unsigned int i = 0; i < fuzzy_struct->output_num; ++i) {
-        fuzzy_struct->output[i] = 0;
+    for (unsigned int i = 0; i < fuzzy_struct->output_num; ++i) //初始化 fuzzy_struct->output 数组。
+    {
+        fuzzy_struct->output[i] = 0;//将所有输出值初始化为 0。
     }
 
 #ifdef fuzzy_pid_rule_base_deep_copy
@@ -50,22 +64,22 @@ void fuzzy_params_init(struct fuzzy *fuzzy_struct, unsigned int mf_type, unsigne
 
 #define inverse(parameter) 1.0f/(float)parameter
 
-// Gaussian membership function
+// Gaussian membership function 高斯隶属度函数
 float gaussmf(float x, float sigma, float c) {
     return expf(-powf(((x - c) / sigma), 2.0f));
 }
 
-// Generalized bell-shaped membership function
+// Generalized bell-shaped membership function 钟型隶属度函数
 float gbellmf(float x, float a, float b, float c) {
     return inverse(1.0f + powf(fabsf((x - c) / a), 2.0f * b));
 }
 
-// Sigmoidal membership function
+// Sigmoidal membership function s型隶属度函数
 float sigmf(float x, float a, float c) {
     return inverse(1.0f + expf(a * (c - x)));
 }
 
-// Trapezoidal membership function
+// Trapezoidal membership function T型隶属度函数
 float trapmf(float x, float a, float b, float c, float d) {
     if (x >= a && x < b)
         return (x - a) / (b - a);
@@ -76,12 +90,12 @@ float trapmf(float x, float a, float b, float c, float d) {
     else return 0.0f;
 }
 
-// Triangular membership function
+// Triangular membership function 三角隶属度函数
 float trimf(float x, float a, float b, float c) {
     return trapmf(x, a, b, b, c);
 }
 
-// Z-shaped membership function
+// Z-shaped membership function Z型隶属度函数
 float zmf(float x, float a, float b) {
     if (x <= a)
         return 1.0f;
@@ -92,8 +106,9 @@ float zmf(float x, float a, float b) {
     else return 0;
 }
 
-// Membership function
-float mf(float x, unsigned int mf_type, int *params) {
+// Membership function 隶属度函数
+float mf(float x, unsigned int mf_type, int *params) //x是输入值，mf_type是隶属度函数类型
+{
     switch (mf_type) {
         case 0:
             return gaussmf(x, params[0], params[1]);
