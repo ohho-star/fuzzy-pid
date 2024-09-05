@@ -32,14 +32,14 @@ enum quantity_fields {
 #define qf_default qf_middle
 
 struct fuzzy {
-    unsigned int input_num;
-    unsigned int output_num;
-    unsigned int fo_type;
-    unsigned int *mf_type;
-    int *mf_params;
-    unsigned int df_type;
-    int *rule_base;
-    float *output;
+    unsigned int input_num;// 输入变量的数量
+    unsigned int output_num;//输出变量的数量
+    unsigned int fo_type;//模糊系统的类型（通常表示模糊操作的类型）
+    unsigned int *mf_type;//指向模糊集（Membership Function）的类型数组
+    int *mf_params;// 指向模糊集参数的数组
+    unsigned int df_type;// 指向模糊集参数的数组
+    int *rule_base;//指向模糊规则库的数组
+    float *output;// 指向输出结果的数组
 };
 
 struct PID {
