@@ -169,34 +169,47 @@ float equilibrium(float a, float b, float params)//计算平衡算子
 }
 
 // Fuzzy operator
-float fo(float a, float b, unsigned int type) {
-    if (type < 3) {
-        return and(a, b, type);
-    } else if (type < 6) {
-        return or(a, b, type - 3);
-    } else {
-        return equilibrium(a, b, 0.5f);
+float fo(float a, float b, unsigned int type) //模糊操作符（Fuzzy Operator）
+{
+    if (type < 3)//如果type < 3
+    {
+        return and(a, b, type);//返回and的计算值
+    } 
+    else if (type < 6) //如果type < 6
+    {
+        return or(a, b, type - 3);//返回or的计算值
+    }
+    else //否则
+    {
+        return equilibrium(a, b, 0.5f);//返回fo的计算值
     }
 }
 
-// Mean of centers defuzzifier, only for two input multiple index
-void moc(const float *joint_membership, const unsigned int *index, const unsigned int *count, struct fuzzy *fuzzy_struct) {
+// Mean of centers defuzzifier, only for two input multiple index中心去模糊化的平均值，只适用于两个输入的多重指标
+void moc(const float *joint_membership, const unsigned int *index, const unsigned int *count, struct fuzzy *fuzzy_struct)
+{
 
-    float denominator_count = 0;
+    float denominator_count = 0;//用于累计分母的总和，初始值为 0
     float numerator_count[fuzzy_struct->output_num];
-    for (unsigned int l = 0; l < fuzzy_struct->output_num; ++l) {
-        numerator_count[l] = 0;
+    for (unsigned int l = 0; l < fuzzy_struct->output_num; ++l) //numerator_count是一个数组，长度为 fuzzy_struct->output_num，用于存储每个输出变量的分子值。 变量初始化
+    {
+        numerator_count[l] = 0;//所有值都初始化为 0。
     }
 
-    for (int i = 0; i < count[0]; ++i) {
-        for (int j = 0; j < count[1]; ++j) {
-            denominator_count += joint_membership[i * count[1] + j];
+    for (int i = 0; i < count[0]; ++i) //count[0] 和 count[1] 是二维网格的大小，表示 joint_membership 数组的行数和列数。
+    {
+        for (int j = 0; j < count[1]; ++j) 
+        {
+            denominator_count += joint_membership[i * count[1] + j];//joint_membership 数组的所有元素，将其值累加到 denominator_count 中。这实际上是在计算整个网格上所有隶属度值的总和。
         }
     }
 
-    for (unsigned int k = 0; k < fuzzy_struct->output_num; ++k) {
-        for (unsigned int i = 0; i < count[0]; ++i) {
-            for (unsigned int j = 0; j < count[1]; ++j) {
+    for (unsigned int k = 0; k < fuzzy_struct->output_num; ++k) //k从0到fuzzy_struct->output_num - 1。fuzzy_struct->output_num是一个整数，表示输出的数量。
+    {
+        for (unsigned int i = 0; i < count[0]; ++i) 
+        {
+            for (unsigned int j = 0; j < count[1]; ++j) 
+            {
                 numerator_count[k] += joint_membership[i * count[1] + j] *
                                       fuzzy_struct->rule_base[k * qf_default * qf_default + index[i] * qf_default +
                                                               index[count[0] + j]];
@@ -215,7 +228,7 @@ void moc(const float *joint_membership, const unsigned int *index, const unsigne
     }
 }
 
-// Defuzzifier
+// Defuzzifier去模糊化
 void df(const float *joint_membership, const unsigned int *output, const unsigned int *count, struct fuzzy *fuzzy_struct,
         int df_type) {
     if(df_type == 0)
@@ -226,7 +239,8 @@ void df(const float *joint_membership, const unsigned int *output, const unsigne
     }
 }
 
-void fuzzy_control(float e, float de, struct fuzzy *fuzzy_struct) {
+void fuzzy_control(float e, float de, struct fuzzy *fuzzy_struct)//e误差，de误差变化率
+{
     float membership[qf_default * 2]; // Store membership
     unsigned int index[qf_default * 2]; // Store the index of each membership
     unsigned int count[2] = {0, 0};
@@ -256,23 +270,28 @@ void fuzzy_control(float e, float de, struct fuzzy *fuzzy_struct) {
 
 #ifdef fuzzy_pid_debug_print
     printf("membership:\n");
-    for (unsigned int k = 0; k < j; ++k) {
+    for (unsigned int k = 0; k < j; ++k)
+    {
         printf("%f\n", membership[k]);
     }
 
     printf("index:\n");
-    for (unsigned int k = 0; k < j; ++k) {
+    for (unsigned int k = 0; k < j; ++k) 
+    {
         printf("%d\n", index[k]);
     }
 
     printf("count:\n");
-    for (unsigned int k = 0; k < 2; ++k) {
+    for (unsigned int k = 0; k < 2; ++k) 
+    {
         printf("%d\n", count[k]);
     }
 #endif
 
-    if (count[0] == 0 || count[1] == 0) {
-        for (unsigned int l = 0; l < fuzzy_struct->output_num; ++l) {
+    if (count[0] == 0 || count[1] == 0) 
+    {
+        for (unsigned int l = 0; l < fuzzy_struct->output_num; ++l) 
+        {
             fuzzy_struct->output[l] = 0;
         }
         return;
