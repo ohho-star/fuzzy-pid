@@ -107,49 +107,65 @@ float zmf(float x, float a, float b) {
 }
 
 // Membership function 隶属度函数
-float mf(float x, unsigned int mf_type, int *params) //x是输入值，mf_type是隶属度函数类型
+float mf(float x, unsigned int mf_type, int *params) //x是输入值，mf_type是隶属度函数类型，params：一个整型数组，包含用于计算隶属度函数的参数。具体的参数数量和含义取决于 mf_type 的值。
 {
-    switch (mf_type) {
-        case 0:
-            return gaussmf(x, params[0], params[1]);
-        case 1:
-            return gbellmf(x, params[0], params[1], params[2]);
-        case 2:
-            return sigmf(x, params[0], params[2]);
-        case 3:
-            return trapmf(x, params[0], params[1], params[2], params[3]);
-        case 5:
-            return zmf(x, params[0], params[1]);
-        default: // set triangular as default membership function
-            return trimf(x, params[0], params[1], params[2]);
+    switch (mf_type) //如果mf_type是
+    {
+        case 0://如果mf_type是0
+            return gaussmf(x, params[0], params[1]);//返回高斯隶属度的计算值。模糊集合的元素、标准差 sigma、均值c。
+        case 1:如果mf_type是1
+            return gbellmf(x, params[0], params[1], params[2]);//返回钟型隶属度函数的计算值。模糊集合的元素、是宽度参数 a、是中心参数 b。
+        case 2:如果mf_type是2
+            return sigmf(x, params[0], params[2]);//返回s型隶属度函数的计算值。模糊集合的元素、是斜率参数 a、是中心参数 c。
+        case 3:如果mf_type是3
+            return trapmf(x, params[0], params[1], params[2], params[3]);//返回T型隶属度函数的计算值。模糊集合的元素、是梯形的左下角、 是梯形的左上角、是梯形的右上角、 是梯形的右下角
+        case 4：如果mf_type是4
+            return trimf(x,params[0], params[1], params[2]);
+        case 5:如果mf_type是5
+            return zmf(x, params[0], params[1]);//返回Z型隶属度函数的计算值。模糊集合的元素、是左侧的界限值、是右侧的界限值。
+        default: // set triangular as default membership function将三角形设置为默认隶属函数
+            return trimf(x, params[0], params[1], params[2]);////返回三角隶属度函数。模糊集合的元素、左端点、中间点（顶点）、和右端点。
     }
 }
 
 // Union operator
-float or(float a, float b, unsigned int type) {
-    if (type == 1) { // algebraic sum
+float or(float a, float b, unsigned int type)//计算并，ab是两个隶属度
+{
+    if (type == 1)//如果type == 1
+    { // algebraic sum使用代数和的方法计算并集
         return a + b - a * b;
-    } else if (type == 2) { // bounded sum
-        return fminf(1, a + b);
-    } else { // fuzzy union
-        return fmaxf(a, b);
+    } 
+    else if (type == 2)//如果type == 2
+    { // bounded sum使用有界和的方法计算并集
+        return fminf(1, a + b);//结果限制在1之内，确保并集的最大值为1。
+    } 
+    else 
+    { // fuzzy union模糊并集方法计算模糊并集
+        return fmaxf(a, b);//取两者的最大值。
     }
 }
 
 // Intersection operator
-float and(float a, float b, unsigned int type) {
-    if (type == 1) { // algebraic product
-        return a * b;
-    } else if (type == 2) { // bounded product
-        return fmaxf(0, a + b - 1);
-    } else { // fuzzy intersection
-        return fminf(a, b);
+float and(float a, float b, unsigned int type)//计算交。ab是两个隶属度
+{
+    if (type == 1) 如果type == 1
+    { // algebraic product使用代数积方法计算模糊交集。 
+        return a * b;//计算了两者的交集。
+    }
+    else if (type == 2)如果type == 2
+    { // bounded product使用有界积方法计算模糊交集。确保结果不低于0，避免负值。
+        return fmaxf(0, a + b - 1);//确保结果不低于0，避免负值。
+    } 
+    else 
+    { // fuzzy intersection使用模糊交集方法计算模糊交集。
+        return fminf(a, b);取两者的最小值。
     }
 }
 
 // Equilibrium operator
-float equilibrium(float a, float b, float params) {
-    return powf(a * b, 1 - params) * powf(1 - (1 - a) * (1 - b), params);
+float equilibrium(float a, float b, float params)//计算平衡算子
+{
+    return powf(a * b, 1 - params) * powf(1 - (1 - a) * (1 - b), params);//powf(a * b, 1 - params)：考虑到交集的部分。powf(1 - (1 - a) * (1 - b), params)：考虑到并集的部分。
 }
 
 // Fuzzy operator
