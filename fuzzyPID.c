@@ -568,9 +568,11 @@ struct PID **pid_vector_init(float params[][pid_params_count], unsigned int coun
 struct PID **
 fuzzy_pid_vector_init(float params[][pid_params_count], float delta_k, unsigned int mf_type, unsigned int fo_type,
                       unsigned int df_type, int *mf_params, int rule_base[][qf_default],
-                      unsigned int count) {
-    struct PID **pid = (struct PID **) malloc(sizeof(struct PID *) * count);
-    for (unsigned int i = 0; i < count; ++i) {
+                      unsigned int count) //定义了一个函数 fuzzy_pid_vector_init，用于初始化模糊PID控制器的数组。
+{
+    struct PID **pid = (struct PID **) malloc(sizeof(struct PID *) * count);//使用malloc动态分配内存，为 count 个 PID 指针分配空间，并将指针数组赋值给 pid。
+    for (unsigned int i = 0; i < count; ++i) //开始一个循环，从0到 count - 1，用于初始化每个PID控制器。
+    {
         pid[i] = fuzzy_pid_init(params[i], delta_k, mf_type, fo_type, df_type, mf_params, rule_base);
     }
     return pid;
