@@ -202,19 +202,19 @@ void moc(const float *joint_membership, const unsigned int *index, const unsigne
     {
         for (int j = 0; j < count[1]; ++j) 
         {
-            denominator_count += joint_membership[i * count[1] + j];//joint_membership 数组的所有元素，将其值累加到 denominator_count 中。这实际上是在计算整个网格上所有隶属度值的总和。
+            denominator_count += joint_membership[i * count[1] + j];//累加隶属度到分母
         }
     }
 
-    for (unsigned int k = 0; k < fuzzy_struct->output_num; ++k) //k从0到fuzzy_struct->output_num - 1。fuzzy_struct->output_num是一个整数，表示输出的数量。
+    for (unsigned int k = 0; k < fuzzy_struct->output_num; ++k) //k从0到输出的数量。
     {
         for (unsigned int i = 0; i < count[0]; ++i) 
         {
             for (unsigned int j = 0; j < count[1]; ++j) 
             {
                 numerator_count[k] += joint_membership[i * count[1] + j] *
-                                      fuzzy_struct->rule_base[k * qf_default * qf_default + index[i] * qf_default +
-                                                              index[count[0] + j]];
+                                      fuzzy_struct->rule_base[k * qf_default * qf_default + index[i] * qf_default +index[count[0] + j]];
+                //输出的第k个变量的分子为
             }
         }
     }
@@ -231,43 +231,47 @@ void moc(const float *joint_membership, const unsigned int *index, const unsigne
 }
 
 // Defuzzifier去模糊化
-void df(const float *joint_membership, const unsigned int *output, const unsigned int *count, struct fuzzy *fuzzy_struct,
-        int df_type) {
-    if(df_type == 0)
+void df(const float *joint_membership, const unsigned int *output, const unsigned int *count, struct fuzzy *fuzzy_struct,int df_type) //用于存储模糊集合的隶属度值。
+{
+    if(df_type == 0)//检查 df_type 是否等于 0。如果是，调用 moc 函数进行去模糊化。
         moc(joint_membership, output, count, fuzzy_struct);
-    else {
-        printf("Waring: No such of defuzzifier!\n");
-        moc(joint_membership, output, count, fuzzy_struct);
+    else //如果不是 0，
+    {
+        printf("Waring: No such of defuzzifier!\n");//打印警告信息 "Waring: No such of defuzzifier!"
+        moc(joint_membership, output, count, fuzzy_struct);//然后仍然调用 moc 函数。
     }
 }
 
-void fuzzy_control(float e, float de, struct fuzzy *fuzzy_struct)//e误差，de误差变化率
+void fuzzy_control(float e, float de, struct fuzzy *fuzzy_struct)//e误差，de误差变化率，fuzzy_struct：模糊控制所需的参数和隶属函数信息。
 {
-    float membership[qf_default * 2]; // Store membership
-    unsigned int index[qf_default * 2]; // Store the index of each membership
-    unsigned int count[2] = {0, 0};
-
+    float membership[qf_default * 2]; // Store membership用于存储计算得到的隶属度值。数组大小为qf_default * 2，因为需要同时处理误差和误差变化率的隶属度。
+    unsigned int index[qf_default * 2]; // Store the index of each membership存储每个隶属度对应的索引，数组大小为qf_default * 2，用于后续的模糊规则查找。
+    unsigned int count[2] = {0, 0};//计数数组，记录有效隶属度的数量。count[0] 用于存储误差的隶属度数量，count[1] 用于存储误差变化率的隶属度数量。
     {
         int j = 0;
-        for (int i = 0; i < qf_default; ++i) {
+        for (int i = 0; i < qf_default; ++i) //使用一个for循环遍历0到qf_default，调用mf函数计算当前误差 e 的隶属度。
+        {
             float temp = mf(e, fuzzy_struct->mf_type[0], fuzzy_struct->mf_params + 4 * i);
-            if (temp > 1e-4) {
+            if (temp > 1e-4)// 计算出的隶属度 temp 大于 1e-4，则将其存储到 membership 数组和 index 数组，并增加索引 j
+            {
                 membership[j] = temp;
                 index[j++] = i;
             }
         }
 
-        count[0] = j;
+        count[0] = j;//存储有效误差隶属度的数量。
 
-        for (int i = 0; i < qf_default; ++i) {
-            float temp = mf(de, fuzzy_struct->mf_type[1], fuzzy_struct->mf_params + 4 * i);
-            if (temp > 1e-4) {
+        for (int i = 0; i < qf_default; ++i)//for 循环，计算误差变化率de的隶属度。
+        {
+            float temp = mf(de, fuzzy_struct->mf_type[1], fuzzy_struct->mf_params + 4 * i);//调用 mf 函数，使用 fuzzy_struct->mf_type[1] 来获取变化率的隶属函数类型。
+            if (temp > 1e-4) //计算出的隶属度大于 1e-4，则存储在 membership 和 index 数组中，增加索引 j
+            {
                 membership[j] = temp;
                 index[j++] = i;
             }
         }
 
-        count[1] = j - count[0];
+        count[1] = j - count[0];//计算变化率的有效隶属度数量。
     }
 
 #ifdef fuzzy_pid_debug_print
@@ -300,37 +304,40 @@ void fuzzy_control(float e, float de, struct fuzzy *fuzzy_struct)//e误差，de�
     }
 
     // Joint membership
-    float joint_membership[count[0] * count[1]];
+    float joint_membership[count[0] * count[1]];//定义了一个浮点数组 joint_membership，其大小为 count[0] * count[1]
 
-    for (int i = 0; i < count[0]; ++i) {
-        for (int j = 0; j < count[1]; ++j) {
+    for (int i = 0; i < count[0]; ++i) 
+    {
+        for (int j = 0; j < count[1]; ++j) 
+        {
             joint_membership[i * count[1] + j] = fo(membership[i], membership[count[0] + j], fuzzy_struct->fo_type);
         }
     }
 
-    df(joint_membership, index, count, fuzzy_struct, 0);
+    df(joint_membership, index, count, fuzzy_struct, 0);//解模糊化
 }
 
 struct PID *raw_fuzzy_pid_init(float kp, float ki, float kd, float integral_limit, float dead_zone,
                                float feed_forward, float error_max, float delta_error_max, float delta_kp_max,
                                float delta_ki_max, float delta_kd_max, unsigned int mf_type, unsigned int fo_type,
                                unsigned int df_type, int mf_params[], int rule_base[][qf_default],
-                               int output_min_value, int output_middle_value, int output_max_value) {
+                               int output_min_value, int output_middle_value, int output_max_value) 
+{
     struct PID *pid = (struct PID *) malloc(sizeof(struct PID));
-    pid->kp = kp;
+    pid->kp = kp;//初始化PID参数
     pid->ki = ki;
     pid->kd = kd;
 
-    pid->delta_kp_max = delta_kp_max;
+    pid->delta_kp_max = delta_kp_max;//初始化kp变化的限制
     pid->delta_ki_max = delta_ki_max;
     pid->delta_kd_max = delta_kd_max;
 
-    pid->delta_kp = 0;
+    pid->delta_kp = 0;//初始化kp的变化
     pid->delta_ki = 0;
     pid->delta_kd = 0;
 
-    pid->error_max = error_max;
-    pid->delta_error_max = delta_error_max;
+    pid->error_max = error_max;//误差限制
+    pid->delta_error_max = delta_error_max;//最大误差限制
 
     int output_count = 1;
     if (ki > 1e-4) {
@@ -342,24 +349,26 @@ struct PID *raw_fuzzy_pid_init(float kp, float ki, float kd, float integral_limi
     pid->fuzzy_struct = fuzzy_init(2, output_count);
     fuzzy_params_init(pid->fuzzy_struct, mf_type, fo_type, df_type, mf_params, rule_base);
 
-    pid->last_error = 0;
+    pid->last_error = 0;//初始化当前和上一时刻的误差
     pid->current_error = 0;
 
-    pid->intergral = 0;
+    pid->intergral = 0;//初始化积分值
     pid->intergral_limit = integral_limit;
 
-    pid->dead_zone = dead_zone;
+    pid->dead_zone = dead_zone;//死区和前馈值设置
     pid->feed_forward = feed_forward;
 
-    pid->output_max_value = output_max_value;
+    pid->output_max_value = output_max_value;//输出值范围设置
     pid->output_middle_value = output_middle_value;
     pid->output_min_value = output_min_value;
 
-    return pid;
+    return pid;//返回初始化完成的 PID 控制器结构体指针。
 }
 
 struct PID *fuzzy_pid_init(float *params, float delta_k, unsigned int mf_type, unsigned int fo_type,
-                           unsigned int df_type, int mf_params[], int rule_base[][qf_default]) {
+                           unsigned int df_type, int mf_params[], int rule_base[][qf_default]) //定义了一个函数 fuzzy_pid_init，用于初始化模糊PID控制器。
+//mf_type、fo_type、df_type：分别表示模糊集合类型、输出模糊化类型和去模糊化类型。
+{
     return raw_fuzzy_pid_init(params[0], params[1], params[2], params[3], params[4], params[5], max_error,
                               max_delta_error, params[0] / delta_k, params[1] / delta_k, params[2] / delta_k, mf_type,
                               fo_type, df_type, mf_params,
@@ -404,37 +413,45 @@ struct PID *raw_pid_init(float kp, float ki, float kd, float integral_limit, flo
     return pid;
 }
 
-struct PID *pid_init(float *params) {
+struct PID *pid_init(float *params) 
+{
     return raw_pid_init(params[0], params[1], params[2], params[3], params[4], params[5], params[6], max_error,
                         max_delta_error, min_pwm_output, middle_pwm_output, max_pwm_output);
 }
 
-int round_user(float parameter) {
-    if ((int) (parameter * 10.0) % 10 >= 5)
+int round_user(float parameter)//将浮点数四舍五入到最接近的整数。
+{
+    if ((int) (parameter * 10.0) % 10 >= 5)//将参数乘以10后取整，再取其余数判断，如果该余数大于或等于5，则返回参数加1，否则直接返回参数
         return parameter + 1;
     else
         return parameter;
 }
 
-int limit(int value, int max_limit, int min_limit) {
-    if (value > max_limit)
-        return max_limit;
-    if (value < min_limit)
-        return min_limit;
-    return value;
+int limit(int value, int max_limit, int min_limit) //用于限制一个整数值在指定的最大值和最小值之间。
+{
+    if (value > max_limit)//如果value超过 max_limit，
+        return max_limit;//返回 max_limit
+    if (value < min_limit)//如果小于 min_limit
+        return min_limit;//返回 min_limit
+    return value;//否则，返回原始值。
 }
 
-float fuzzy_pid_control(float real, float idea, struct PID *pid) {
+float fuzzy_pid_control(float real, float idea, struct PID *pid) 
+{
     pid->last_error = pid->current_error;
     pid->current_error = idea - real;
     float delta_error = pid->current_error - pid->last_error;
 #ifdef fuzzy_pid_dead_zone
-    if (pid->current_error < pid->dead_zone && pid->current_error > -pid->dead_zone) {
+    if (pid->current_error < pid->dead_zone && pid->current_error > -pid->dead_zone) 
+    {
         pid->current_error = 0;
-    } else {
+    }
+    else 
+    {
         if (pid->current_error > pid->dead_zone)
             pid->current_error = pid->current_error - pid->dead_zone;
-        else {
+        else 
+        {
             if (pid->current_error < -pid->dead_zone)
                 pid->current_error = pid->current_error + pid->dead_zone;
         }
