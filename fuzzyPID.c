@@ -438,37 +438,42 @@ int limit(int value, int max_limit, int min_limit) //用于限制一个整数值
 
 float fuzzy_pid_control(float real, float idea, struct PID *pid) 
 {
-    pid->last_error = pid->current_error;
-    pid->current_error = idea - real;
-    float delta_error = pid->current_error - pid->last_error;
-#ifdef fuzzy_pid_dead_zone
-    if (pid->current_error < pid->dead_zone && pid->current_error > -pid->dead_zone) 
+    pid->last_error = pid->current_error;//保存上一次的误差。
+    pid->current_error = idea - real;//计算当前误差，即目标值减去实际值。
+    float delta_error = pid->current_error - pid->last_error;//计算当前误差与上一次误差的差值。
+#ifdef fuzzy_pid_dead_zone//检查是否启用死区功能
+    if (pid->current_error < pid->dead_zone && pid->current_error > -pid->dead_zone) //如果误差在死区值之间
     {
-        pid->current_error = 0;
+        pid->current_error = 0;//误差值设为0
     }
-    else 
+    else //如果误差不在死区值之间
     {
-        if (pid->current_error > pid->dead_zone)
-            pid->current_error = pid->current_error - pid->dead_zone;
-        else 
+        if (pid->current_error > pid->dead_zone)//如果误差值大于死区值
+            pid->current_error = pid->current_error - pid->dead_zone;//误差值=误差值-死区值
+        else 否则，如果误差值小于死区值的负值
         {
-            if (pid->current_error < -pid->dead_zone)
-                pid->current_error = pid->current_error + pid->dead_zone;
+            if (pid->current_error < -pid->dead_zone)//如果误差值小于死区值的负值
+                pid->current_error = pid->current_error + pid->dead_zone;//误差值=误差值+死区值
         }
     }
-#endif
+#endif结束如果
     fuzzy_control(pid->current_error / pid->error_max * 3.0f, delta_error / pid->delta_error_max * 3.0f,
                   pid->fuzzy_struct);
+    //调用 fuzzy_control 函数，将当前误差和误差变化的比例传入，进行模糊控制逻辑的计算，并更新pid->fuzzy_struct。
+    //pid->current_error / pid->error_max * 3.0f：将当前误差标准化为 0 到 3 的范围。
+    //delta_error / pid->delta_error_max * 3.0f：同样将误差变化量标准化。
+    
+    pid->delta_kp = pid->fuzzy_struct->output[0] / 3.0f * pid->delta_kp_max + pid->kp;//新的 kp 值=fuzzy_struct->output[0]取消归一化+原kp
 
-    pid->delta_kp = pid->fuzzy_struct->output[0] / 3.0f * pid->delta_kp_max + pid->kp;
+    if (pid->fuzzy_struct->output_num >= 2)//如果输出数量大于或等于2
+        pid->delta_ki = pid->fuzzy_struct->output[1] / 3.0f * pid->delta_ki_max;//通过将第二个输出值（output[1]）/3 × delta_ki_max，来更新 delta_ki
+    else //否则，输出数量小于2
+        pid->delta_ki = 0;//则pid->delta_ki设为0
 
-    if (pid->fuzzy_struct->output_num >= 2)
-        pid->delta_ki = pid->fuzzy_struct->output[1] / 3.0f * pid->delta_ki_max;
-    else pid->delta_ki = 0;
-
-    if (pid->fuzzy_struct->output_num >= 3)
-        pid->delta_kd = pid->fuzzy_struct->output[2] / 3.0f * pid->delta_kd_max;
-    else pid->delta_ki = 0;
+    if (pid->fuzzy_struct->output_num >= 3)//如果输出数量大于或等于3
+        pid->delta_kd = pid->fuzzy_struct->output[2] / 3.0f * pid->delta_kd_max;//通过将第三个输出值（output[2]）/3 × delta_kd_max，来更新 delta_kd
+    else //否则，输出变量小于3
+        pid->delta_kd = 0;//则pid->delta_kd设为0
 
 #ifdef fuzzy_pid_debug_print
     printf("kp : %f, ki : %f, kd : %f\n", kp, ki, kd);
@@ -490,17 +495,22 @@ float fuzzy_pid_control(float real, float idea, struct PID *pid)
 }
 
 
-float pid_control(float real, float idea, struct PID *pid) {
-    pid->last_error = pid->current_error;
-    pid->current_error = idea - real;
+float pid_control(float real, float idea, struct PID *pid) 
+{
+    pid->last_error = pid->current_error;//将当前误差存储为最后误差
+    pid->current_error = idea - real;//计算新的当前误差
 
 #ifdef pid_dead_zone
-    if (pid->current_error < pid->dead_zone && pid->current_error > -pid->dead_zone) {
+    if (pid->current_error < pid->dead_zone && pid->current_error > -pid->dead_zone) 
+    {
         pid->current_error = 0;
-    } else {
+    } 
+    else 
+    {
         if (pid->current_error > pid->dead_zone)
             pid->current_error = pid->current_error - pid->dead_zone;
-        else {
+        else 
+        {
             if (pid->current_error < -pid->dead_zone)
                 pid->current_error = pid->current_error + pid->dead_zone;
         }
@@ -579,7 +589,8 @@ int fuzzy_pid_motor_pwd_output(float real, float idea, bool direct, struct PID *
                  pid->output_max_value, pid->output_min_value);
 }
 
-int pid_motor_pwd_output(float real, float idea, bool direct, struct PID *pid) {
+int pid_motor_pwd_output(float real, float idea, bool direct, struct PID *pid) 
+{
     return limit(direct_control(pid->output_middle_value, pid_control(real, idea, pid), direct), pid->output_max_value,
                  pid->output_min_value);
 }
