@@ -188,17 +188,17 @@ float fo(float a, float b, unsigned int type) //模糊操作符（Fuzzy Operator
 }
 
 // Mean of centers defuzzifier, only for two input multiple index中心去模糊化的平均值，只适用于两个输入的多重指标
-void moc(const float *joint_membership, const unsigned int *index, const unsigned int *count, struct fuzzy *fuzzy_struct)
+void moc(const float *joint_membership, const unsigned int *index, const unsigned int *count, struct fuzzy *fuzzy_struct)//joint_membership：指向存储隶属度值的数组。index：指向存储索引的数组，用于访问模糊规则。count：指向存储网格维度的数组，表示 joint_membership 数组的行数和列数。fuzzy_struct：指向包含模糊系统相关信息的结构体。
 {
 
     float denominator_count = 0;//用于累计分母的总和，初始值为 0
-    float numerator_count[fuzzy_struct->output_num];
+    float numerator_count[fuzzy_struct->output_num];//numerator_count数组用于存储每个输出变量的分子值，大小为fuzzy_struct->output_num。
     for (unsigned int l = 0; l < fuzzy_struct->output_num; ++l) //numerator_count是一个数组，长度为 fuzzy_struct->output_num，用于存储每个输出变量的分子值。 变量初始化
     {
         numerator_count[l] = 0;//所有值都初始化为 0。
     }
 
-    for (int i = 0; i < count[0]; ++i) //count[0] 和 count[1] 是二维网格的大小，表示 joint_membership 数组的行数和列数。
+    for (int i = 0; i < count[0]; ++i) //count[0] 和 count[1] 是二维网格的大小，表示joint_membership 数组的行数和列数。
     {
         for (int j = 0; j < count[1]; ++j) 
         {
