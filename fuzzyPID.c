@@ -167,23 +167,23 @@ float and(float a, float b, unsigned int type)//计算交。ab是两个隶属度
 // Equilibrium operator
 float equilibrium(float a, float b, float params)//计算平衡算子
 {
-    return powf(a * b, 1 - params) * powf(1 - (1 - a) * (1 - b), params);//powf(a * b, 1 - params)：考虑到交集的部分。powf(1 - (1 - a) * (1 - b), params)：考虑到并集的部分。
+    return powf(a * b, 1 - params) * powf(1 - (1 - a) * (1 - b), params);//powf(a * b, 1 - params)：计算a*b的1-params次乘方。powf(1 - (1 - a) * (1 - b), params)：计算b+a-a*b的params次乘方
 }
 
 // Fuzzy operator
-float fo(float a, float b, unsigned int type) //模糊操作符（Fuzzy Operator）
+float fo(float a, float b, unsigned int type) //模糊操作符（Fuzzy Operator），a和b是两个隶属度，type决定是计算交、补还是计算平衡算子，并且选择的是代数和有界和，还是代数积和有界积。
 {
     if (type < 3)//如果type < 3
     {
-        return and(a, b, type);//返回and的计算值
+        return and(a, b, type);//返回and（交集）的计算值
     } 
     else if (type < 6) //如果type < 6
     {
-        return or(a, b, type - 3);//返回or的计算值
+        return or(a, b, type - 3);//返回or（补集）的计算值
     }
     else //否则
     {
-        return equilibrium(a, b, 0.5f);//返回fo的计算值
+        return equilibrium(a, b, 0.5f);//返回fo（平衡算子）的计算值
     }
 }
 
