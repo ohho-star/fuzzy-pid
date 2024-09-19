@@ -40,7 +40,7 @@ struct fuzzy {
     unsigned int df_type;// 指向模糊集参数的数组
     int *rule_base;//指向模糊规则库的数组
     float *output;// 指向输出结果的数组
-};
+};//结构体 fuzzy：包含模糊系统的属性，如输入和输出变量数量、模糊操作类型、模糊集类型和参数、模糊规则库以及输出结果。
 
 struct PID {
     float kp;
