@@ -11,10 +11,11 @@
     float *output;// 指向输出结果的数组
 };*/
 
-struct fuzzy *fuzzy_init(unsigned int input_num, unsigned int output_num) {
+struct fuzzy *fuzzy_init(unsigned int input_num, unsigned int output_num) //用于初始化 fuzzy 结构体。首先分配内存来存储模糊系统的属性，包括输入和输出变量的数量、模糊集类型数组、模糊集参数、模糊规则库和输出结果。
+{
     struct fuzzy *fuzzy_struct = (struct fuzzy *) malloc(sizeof(struct fuzzy));
-    fuzzy_struct->input_num = input_num;
-    fuzzy_struct->output_num = output_num;
+    fuzzy_struct->input_num = input_num;//设置输入变量的数量为input_num
+    fuzzy_struct->output_num = output_num;//设置输出变量的数量为output_num
     fuzzy_struct->mf_type = (unsigned int *) malloc((input_num + output_num) * sizeof(unsigned int));
 #ifdef fuzzy_pid_rule_base_deep_copy
     fuzzy_struct->mf_params = (int *) malloc(4 * qf_default * sizeof(int));
@@ -24,10 +25,11 @@ struct fuzzy *fuzzy_init(unsigned int input_num, unsigned int output_num) {
     return fuzzy_struct;
 }
 
-void delete_fuzzy(struct fuzzy *fuzzy_struct) {
-    free(fuzzy_struct->mf_type);
-    free(fuzzy_struct->output);
-    free(fuzzy_struct);
+void delete_fuzzy(struct fuzzy *fuzzy_struct) //定义了一个函数delete_fuzzy，用于释放之前分配给模糊逻辑系统结构体的内存。
+{
+    free(fuzzy_struct->mf_type);//释放存储模糊集类型数组的内存。
+    free(fuzzy_struct->output);//释放存储输出结果的内存。
+    free(fuzzy_struct);//释放整个模糊系统结构体的内存。
 }
 
 void fuzzy_params_init(struct fuzzy *fuzzy_struct, unsigned int mf_type, unsigned int fo_type, unsigned int df_type,
